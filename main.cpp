@@ -1,12 +1,11 @@
+// This main program is a quick and simple unit test for
+// the fluent hierarchical state machine library in this
+// repo.
 
 #include "kv/fhsm/StateMachine.h"
 
 #include <cstdio>
-#include <string>
 #include <iostream>
-#include <array>
-#include <map>
-#include <exception>
 
 #define TEST_EQ(expected, actual) \
   { \
@@ -26,13 +25,11 @@ using namespace kv::fhsm;
 
 namespace {
 
-
-
   enum MySignals{ GO_NORTH, GO_SOUTH, GO_EAST, GO_WEST, GO_HOME, DO_ACTION };
-  enum MyStates { INVALID=-1, WHOLE, NORTH, SOUTH, EAST, NORTH_EAST, NORTH_WEST, NNE, ENE, NNW, WNW, STATE_SENTINAL };
+  enum MyStates { INVALID=-1, WHOLE, NORTH, SOUTH, EAST, NORTH_WEST, NNW, STATE_SENTINAL };
   class StatefulController {
     MyStates m_state = INVALID;
-    StateMachine<StatefulController, MyStates, WHOLE, WNW, MySignals> m_hsm;
+    StateMachine<StatefulController, MyStates, WHOLE, NNW, MySignals> m_hsm;
 
   public:
     StatefulController()
@@ -64,7 +61,7 @@ namespace {
          .SetOnExit(&StatefulController::SouthOnExit)
          .ForSignal(GO_NORTH).GoTo(NORTH)
          .ForSignal(GO_EAST).GoToIf(EAST, &StatefulController::IsEastOpen)
-         .ForSignal(GO_EAST).Do(&StatefulController::DoAction); // Action plus transition on SOUTH
+         .ForSignal(GO_EAST).Do(&StatefulController::DoAction); // Action plus transition on GO_EAST from SOUTH
 
       m_hsm.DefineState(NORTH_WEST)
          .SetParent(NORTH)
