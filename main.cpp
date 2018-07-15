@@ -22,19 +22,19 @@
 
 namespace {
 
-  template<class Actor, typename StateSpace, class Container, typename SignalSpace>
+  template<class Actor, typename StateSpace, class StateMachine, typename SignalSpace>
   class State {
   public:
     using MethodPointer = void(Actor::*)();
     using AllowPointer = bool(Actor::*)()const;
-    using BoundState = State<Actor, StateSpace, Container, SignalSpace>;
-    using IndexType = typename Container::IndexType;
+    using BoundState = State<Actor, StateSpace, StateMachine, SignalSpace>;
+    using IndexType = typename StateMachine::IndexType;
 
   private:
-    Container* m_c;
+    StateMachine* m_sm;
     Actor* m_actor;
     StateSpace m_value;
-    IndexType m_parent{Container::COUNT};
+    IndexType m_parent{StateMachine::COUNT};
     bool m_hasParent = false;
     MethodPointer m_onEnter = nullptr;
     MethodPointer m_onTick = nullptr;
@@ -45,9 +45,9 @@ namespace {
       IndexType leastCommonAncestor;
       AllowPointer allow = nullptr;
 
-      Trans() : m_destination(static_cast<StateSpace>(0)), leastCommonAncestor(Container::COUNT), allow(nullptr) {}
-      Trans(StateSpace d) : m_destination(d), leastCommonAncestor(Container::COUNT), allow(nullptr) {}
-      Trans(StateSpace d, AllowPointer allow) : m_destination(d), leastCommonAncestor(Container::COUNT), allow(allow) {}
+      Trans() : m_destination(static_cast<StateSpace>(0)), leastCommonAncestor(StateMachine::COUNT), allow(nullptr) {}
+      Trans(StateSpace d) : m_destination(d), leastCommonAncestor(StateMachine::COUNT), allow(nullptr) {}
+      Trans(StateSpace d, AllowPointer allow) : m_destination(d), leastCommonAncestor(StateMachine::COUNT), allow(allow) {}
       StateSpace GetDestination() const { return m_destination; }
     };
 
@@ -78,10 +78,10 @@ namespace {
   public:
     State() {}
     virtual ~State() = default;
-    void Initialize(Actor* actor, const StateSpace value, Container* c) {
+    void Initialize(Actor* actor, const StateSpace value, StateMachine* hsm) {
       m_actor = actor;
       m_value = value;
-      m_c = c;
+      m_sm = hsm;
     }
 
     // Initialization methods return self reference so they can be chained.
@@ -108,6 +108,10 @@ namespace {
       return SignalSetter(*this, signal);
     }
 
+  private:
+    friend SignalSetter;
+    friend StateMachine; //TODO(djk): see if there is a clean way to eliminate this.
+
     BoundState& AddTransition(SignalSpace signal, StateSpace destination) {
       Trans t{destination};
       m_transitions.insert(std::pair<int, Trans>(SignalToInt(signal), t));
@@ -124,7 +128,7 @@ namespace {
     }
 
     BoundState& SetParent(StateSpace p) {
-      m_parent = m_c->StateToIndex(p);
+      m_parent = m_sm->StateToIndex(p);
       m_hasParent = true;
       return *this;
     }
@@ -133,28 +137,24 @@ namespace {
     IndexType GetParent() const { return m_parent; }
 
     void OnEnter() {
-      //std::cout << "OnEnter for " << m_value << std::endl;
       if (m_onEnter) {
         (m_actor->*m_onEnter)();
       }
     }
     void OnExit() {
-      //std::cout << "OnExit for " << m_value << std::endl;
       if (m_onExit) {
         (m_actor->*m_onExit)();
       }
     }
     void OnTick() {
-      //std::cout << "OnTick for " << m_value << std::endl;
       if (m_onTick) {
         (m_actor->*m_onTick)();
       } else if (HasParent()) {
-         m_c->StateRef(GetParent()).OnTick();
+         m_sm->StateRef(GetParent()).OnTick();
       }
     }
     void OnSignal(const SignalSpace sig) {
       auto s = SignalToInt(sig);
-      //std::cout << "OnSignal for " << m_value << " with signal " << s << std::endl;
       auto consumed = false;
       OnSignalDoActionIf(s, consumed);
       OnSignalDoTransitionIf(s, consumed);
@@ -163,7 +163,6 @@ namespace {
     void OnSignalDoActionIf(int s, bool& consumed) {
       if (m_actions.count(s)) {
          auto action = m_actions[s];
-         //std::cout << "Performing action for signal " << s << std::endl;
          if (action) {
             (m_actor->*(action))();
          }
@@ -173,13 +172,12 @@ namespace {
     void OnSignalDoTransitionIf(int s, bool& consumed) {
       if (m_transitions.count(s)) {
         auto t = m_transitions[s];
-        //std::cout << "Going to " << t.destination << std::endl;
         auto isAllowed = true;
         if (t.allow) { // If a guard was set, check it
            isAllowed = (m_actor->*(t.allow))();
         }
         if (isAllowed) {
-           m_c->ExecuteTransition(m_c->StateToIndex(t.GetDestination()));
+           m_sm->ExecuteTransition(m_sm->StateToIndex(t.GetDestination()));
         }
         consumed = true;
       }
@@ -187,7 +185,7 @@ namespace {
     void ElevateIfNotConsumed(SignalSpace sig, bool consumed) {
       if (!consumed && HasParent()) {
          // Try parent
-         m_c->StateRef(GetParent()).OnSignal(sig);
+         m_sm->StateRef(GetParent()).OnSignal(sig);
       }
     }
   };
