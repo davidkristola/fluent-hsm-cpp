@@ -31,14 +31,14 @@ namespace fhsm {
     MethodPointer m_onExit = nullptr;
 
     struct Trans {
-      StateSpace m_destination;
+      IndexType m_destination;
       IndexType leastCommonAncestor;
       AllowPointer allow = nullptr;
 
-      Trans() : m_destination(static_cast<StateSpace>(0)), leastCommonAncestor(StateMachine::UNKNOWN), allow(nullptr) {}
-      Trans(StateSpace d) : m_destination(d), leastCommonAncestor(StateMachine::UNKNOWN), allow(nullptr) {}
-      Trans(StateSpace d, AllowPointer allow) : m_destination(d), leastCommonAncestor(StateMachine::UNKNOWN), allow(allow) {}
-      StateSpace GetDestination() const { return m_destination; }
+      Trans() : m_destination(StateMachine::COUNT), leastCommonAncestor(StateMachine::UNKNOWN), allow(nullptr) {}
+      Trans(IndexType d) : m_destination(d), leastCommonAncestor(StateMachine::UNKNOWN), allow(nullptr) {}
+      Trans(IndexType d, AllowPointer allow) : m_destination(d), leastCommonAncestor(StateMachine::UNKNOWN), allow(allow) {}
+      IndexType GetDestination() const { return m_destination; }
       IndexType GetLCA() const { return leastCommonAncestor; }
       void SetLCA(IndexType lca) { leastCommonAncestor = lca; }
     };
@@ -105,12 +105,12 @@ namespace fhsm {
     friend StateMachine; //TODO(djk): see if there is a clean way to eliminate this.
 
     BoundState& AddTransition(SignalSpace signal, StateSpace destination) {
-      Trans t{destination};
+      Trans t{m_sm->StateToIndex(destination)};
       m_transitions.insert(std::pair<int, Trans>(SignalToInt(signal), t));
       return *this;
     }
     BoundState& AddTransition(SignalSpace signal, StateSpace destination, AllowPointer allow) {
-      Trans t{destination, allow};
+      Trans t{m_sm->StateToIndex(destination), allow};
       m_transitions.insert(std::pair<int, Trans>(SignalToInt(signal), t));
       return *this;
     }
@@ -169,7 +169,7 @@ namespace fhsm {
            isAllowed = (m_actor->*(t.allow))();
         }
         if (isAllowed) {
-           t.SetLCA(m_sm->ExecuteTransition(m_sm->StateToIndex(t.GetDestination()), t.GetLCA()));
+           t.SetLCA(m_sm->ExecuteTransition(t.GetDestination(), t.GetLCA()));
         }
         consumed = true;
       }
