@@ -35,10 +35,12 @@ namespace fhsm {
       IndexType leastCommonAncestor;
       AllowPointer allow = nullptr;
 
-      Trans() : m_destination(static_cast<StateSpace>(0)), leastCommonAncestor(StateMachine::COUNT), allow(nullptr) {}
-      Trans(StateSpace d) : m_destination(d), leastCommonAncestor(StateMachine::COUNT), allow(nullptr) {}
-      Trans(StateSpace d, AllowPointer allow) : m_destination(d), leastCommonAncestor(StateMachine::COUNT), allow(allow) {}
+      Trans() : m_destination(static_cast<StateSpace>(0)), leastCommonAncestor(StateMachine::UNKNOWN), allow(nullptr) {}
+      Trans(StateSpace d) : m_destination(d), leastCommonAncestor(StateMachine::UNKNOWN), allow(nullptr) {}
+      Trans(StateSpace d, AllowPointer allow) : m_destination(d), leastCommonAncestor(StateMachine::UNKNOWN), allow(allow) {}
       StateSpace GetDestination() const { return m_destination; }
+      IndexType GetLCA() const { return leastCommonAncestor; }
+      void SetLCA(IndexType lca) { leastCommonAncestor = lca; }
     };
 
     std::map<int, Trans> m_transitions;
@@ -167,7 +169,7 @@ namespace fhsm {
            isAllowed = (m_actor->*(t.allow))();
         }
         if (isAllowed) {
-           m_sm->ExecuteTransition(m_sm->StateToIndex(t.GetDestination()));
+           t.SetLCA(m_sm->ExecuteTransition(m_sm->StateToIndex(t.GetDestination()), t.GetLCA()));
         }
         consumed = true;
       }

@@ -22,6 +22,7 @@ namespace fhsm {
     static const IndexType FIRST{static_cast<IndexType>(first)};
     static const IndexType LAST{static_cast<IndexType>(last)};
     static const IndexType COUNT{LAST - FIRST + 1};
+    static const IndexType UNKNOWN{COUNT + 1};
     using MethodPointer = void(Actor::*)();
     using StateChangeCallback = void(Actor::*)(const StateSpace s);
 
@@ -99,14 +100,18 @@ namespace fhsm {
       }
       current.OnEnter();
     }
-    void ExecuteTransition(IndexType destination) {
+    IndexType ExecuteTransition(IndexType destination, IndexType leastCommonAncestor=UNKNOWN) {
       //std::cout << "executing transition from " << m_current << " to " << destination << std::endl;
-      IndexType lca = LeastCommonAncestor(m_current, destination);
+      IndexType lca = leastCommonAncestor;
+      if (UNKNOWN == lca) {
+         lca = LeastCommonAncestor(m_current, destination);
+      } else std::cout << "preset LCA " << lca << std::endl;
       //std::cout << "via LCA " << lca << std::endl;
       ExitHereToLCA(m_current, lca);
       EnterLCAToHere(lca, destination);
       m_current = destination;
       InformActorOfCurrentState();
+      return lca;
     }
     IndexType LeastCommonAncestor(IndexType source, IndexType destination) {
       if (source == destination) return source;
