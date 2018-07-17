@@ -40,13 +40,13 @@ namespace fhsm {
          if (m_sm.IsAncestorOf(m_index, parent)) {
             throw CyclicGraphException();
          }
-         return m_sm.StateRef(m_index).SetParent(p);
+         return m_sm.StateRef(m_index).SetParent(parent);
       }
       BoundState& SetNoParent() {
-         return m_sm.StateRef(m_index);
+         return m_sm.StateRef(m_index).SetParent(COUNT);
       }
     };
-         
+
   public:
 
     StateMachine(Actor& actor) : m_actor(actor), m_current(StateToIndex(first))
@@ -57,7 +57,6 @@ namespace fhsm {
     }
 
     ParentSetter DefineState(StateSpace state) {
-      StateRef(state).SetUp(nullptr, nullptr, nullptr);
       return ParentSetter(*this, StateToIndex(state));
     }
 
@@ -101,12 +100,10 @@ namespace fhsm {
       current.OnEnter();
     }
     IndexType ExecuteTransition(IndexType destination, IndexType leastCommonAncestor=UNKNOWN) {
-      //std::cout << "executing transition from " << m_current << " to " << destination << std::endl;
       IndexType lca = leastCommonAncestor;
       if (UNKNOWN == lca) {
          lca = LeastCommonAncestor(m_current, destination);
-      } else std::cout << "preset LCA " << lca << std::endl;
-      //std::cout << "via LCA " << lca << std::endl;
+      }
       ExitHereToLCA(m_current, lca);
       EnterLCAToHere(lca, destination);
       m_current = destination;
@@ -114,7 +111,9 @@ namespace fhsm {
       return lca;
     }
     IndexType LeastCommonAncestor(IndexType source, IndexType destination) {
-      if (source == destination) return source;
+      if (source == destination) return source; // Don't care about a parent in this case.
+      if (!m_states[source].IsParentSet()) return UNKNOWN;
+      if (!m_states[destination].IsParentSet()) return UNKNOWN;
       if (IsAncestorOf(source, destination)) return source;
       if (m_states[source].GetParent() == COUNT) return COUNT; // no common ancestor
       return LeastCommonAncestor(m_states[source].GetParent(), destination);

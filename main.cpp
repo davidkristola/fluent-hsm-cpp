@@ -387,7 +387,6 @@ namespace {
     TEST_EQ(1, 2);
   }
 
-  //TODO compute LCA once when transition is added
 }
 
 int main(int argc, char** argv) {

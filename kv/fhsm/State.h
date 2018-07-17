@@ -24,8 +24,9 @@ namespace fhsm {
     StateMachine* m_sm;
     Actor* m_actor;
     StateSpace m_value;
-    IndexType m_parent{StateMachine::COUNT};
+    IndexType m_parent{StateMachine::COUNT}; //TODO(djk): figure out why this can't be UNKNOWN
     bool m_hasParent = false;
+    bool m_parentIsSet = false;
     MethodPointer m_onEnter = nullptr;
     MethodPointer m_onTick = nullptr;
     MethodPointer m_onExit = nullptr;
@@ -56,7 +57,7 @@ namespace fhsm {
       SignalSetter(BoundState& state, SignalSpace signal) : m_s(state), m_signal(signal) {}
     public:
       BoundState& GoTo(StateSpace dest) {
-         return m_s.AddTransition(m_signal, dest);
+         return m_s.AddTransition(m_signal, dest, nullptr);
       }
       BoundState& GoToIf(StateSpace dest, AllowPointer allow) {
          return m_s.AddTransition(m_signal, dest, allow);
@@ -77,12 +78,6 @@ namespace fhsm {
     }
 
     // Initialization methods return self reference so they can be chained.
-    BoundState& SetUp(MethodPointer onEnter, MethodPointer onTick, MethodPointer onExit) {
-      m_onEnter = onEnter;
-      m_onTick = onTick;
-      m_onExit = onExit;
-      return *this;
-    }
     BoundState& SetOnEnter(MethodPointer onEnter) {
       m_onEnter = onEnter;
       return *this;
@@ -104,14 +99,13 @@ namespace fhsm {
     friend SignalSetter;
     friend StateMachine; //TODO(djk): see if there is a clean way to eliminate this.
 
-    BoundState& AddTransition(SignalSpace signal, StateSpace destination) {
-      Trans t{m_sm->StateToIndex(destination)};
-      m_transitions.insert(std::pair<int, Trans>(SignalToInt(signal), t));
-      return *this;
-    }
     BoundState& AddTransition(SignalSpace signal, StateSpace destination, AllowPointer allow) {
-      Trans t{m_sm->StateToIndex(destination), allow};
-      m_transitions.insert(std::pair<int, Trans>(SignalToInt(signal), t));
+      auto there = m_sm->StateToIndex(destination);
+      auto here = m_sm->StateToIndex(m_value);
+      Trans t{there, allow};
+      t.SetLCA(m_sm->LeastCommonAncestor(here, there));
+      auto s = SignalToInt(signal);
+      m_transitions[s] = t;
       return *this;
     }
     BoundState& AddAction(SignalSpace signal, MethodPointer onSignal) {
@@ -119,13 +113,15 @@ namespace fhsm {
       return *this;
     }
 
-    BoundState& SetParent(StateSpace p) {
-      m_parent = m_sm->StateToIndex(p);
-      m_hasParent = true;
+    BoundState& SetParent(IndexType p) {
+      m_parent = p;
+      m_hasParent = (p != StateMachine::COUNT);
+      m_parentIsSet = true;
       return *this;
     }
 
     bool HasParent() const { return m_hasParent; }
+    bool IsParentSet() const { return m_parentIsSet; }
     IndexType GetParent() const { return m_parent; }
 
     void OnEnter() {
