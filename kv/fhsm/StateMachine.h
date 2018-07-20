@@ -4,16 +4,19 @@
 
 #include "State.h"
 
-#include <cstdio>
-#include <string>
-#include <iostream>
 #include <array>
-#include <map>
 #include <exception>
+
+#define NOT !
 
 namespace kv {
 namespace fhsm {
 
+//! Fluent style hierarchical state machine.
+//! Actor is the class using the state machine.
+//! StateSpace is the type (convertable to size_t) that defines the states.
+//! SignalSpace is the type (convertable to int) that defines state transition events.
+//
 template<class Actor, typename StateSpace, const StateSpace first, const StateSpace last, typename SignalSpace>
 class StateMachine {
 public:
@@ -26,6 +29,8 @@ public:
    using MethodPointer = void(Actor::*)();
    using StateChangeCallback = void(Actor::*)(const StateSpace s);
 
+   // Hierarchical states must form trees or forrests: no cycles!
+   //
    class CyclicGraphException : public std::exception {};
 
 private:
@@ -48,16 +53,22 @@ private:
    };
 
 public:
+   //! Create a state machine object.
    StateMachine(Actor& actor) : m_actor(actor), m_current(StateToIndex(first)) {
       for (IndexType i=0; i<COUNT; i++) {
          m_states[i].Initialize(&m_actor, IndexToState(i), this);
       }
    }
 
+   //! Start the process of defining a state (to be called for each state).
+   //! This returns a helper class that requires you to set a parent state
+   //! or affirm that there is no parent state.
    ParentSetter DefineState(StateSpace state) {
       return ParentSetter(*this, StateToIndex(state));
    }
 
+   //! Once all of the states have been defined, this completes the process.
+   //! Provide an optional method to receive state change notifications.
    void ConcludeSetupAndSetInitialState(StateSpace initial, StateChangeCallback noteState=nullptr) {
       m_noteState = noteState;
       m_current = StateToIndex(initial);
@@ -65,9 +76,12 @@ public:
       EnterParentOf(m_current);
    }
 
+   //! Tick (or step if you like) the current active state.
    void Tick() {
       StateRef(m_current).OnTick();
    }
+
+   //! Send a state transition event/signal to the current active state.
    void Signal(const SignalSpace s) {
       StateRef(m_current).OnSignal(s);
    }
@@ -109,8 +123,8 @@ private:
    }
    IndexType LeastCommonAncestor(IndexType source, IndexType destination) {
       if (source == destination) return source; // Don't care about a parent in this case.
-      if (!m_states[source].IsParentSet()) return UNKNOWN;
-      if (!m_states[destination].IsParentSet()) return UNKNOWN;
+      if ( NOT m_states[source].IsParentSet()) return UNKNOWN;
+      if ( NOT m_states[destination].IsParentSet()) return UNKNOWN;
       if (IsAncestorOf(source, destination)) return source;
       if (m_states[source].GetParent() == COUNT) return COUNT; // no common ancestor
       return LeastCommonAncestor(m_states[source].GetParent(), destination);
@@ -145,5 +159,7 @@ private:
 
 } // namespace fhsm
 } // namespace kv
+
+#undef NOT
 
 #endif

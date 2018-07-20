@@ -4,6 +4,8 @@
 
 #include <map>
 
+#define NOT !
+
 namespace kv {
 namespace fhsm {
    
@@ -91,7 +93,6 @@ public:
 
 private:
    friend SignalSetter;
-   friend StateMachine; //TODO(djk): see if there is a clean way to eliminate this.
 
    BoundState& AddTransition(SignalSpace signal, StateSpace destination, AllowPointer allow) {
       auto there = m_sm->StateToIndex(destination);
@@ -107,6 +108,8 @@ private:
       return *this;
    }
 
+public:
+   // Methods called by StateMachine; could be private if "friend StateMachine;"
    BoundState& SetParent(IndexType p) {
       m_parent = p;
       m_hasParent = (p != StateMachine::COUNT);
@@ -142,6 +145,7 @@ private:
       OnSignalDoTransitionIf(s, consumed);
       ElevateIfNotConsumed(sig, consumed);
    }
+private:
    void OnSignalDoActionIf(int s, bool& consumed) {
       if (m_actions.count(s)) {
          auto action = m_actions[s];
@@ -165,7 +169,7 @@ private:
       }
    }
    void ElevateIfNotConsumed(SignalSpace sig, bool consumed) {
-      if (!consumed && HasParent()) {
+      if ( NOT consumed && HasParent()) {
          // Try parent
          m_sm->StateRef(GetParent()).OnSignal(sig);
       }
@@ -174,5 +178,7 @@ private:
   
 } // namespace fhsm
 } // namespace kv
+
+#undef NOT
 
 #endif
