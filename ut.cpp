@@ -191,10 +191,202 @@ public:
    }
 };
 
-TEST_CASE( "Dispatch to subclass", "[fhsm]" ) {
-   StatefulControllerPlus uut;
-   uut.Signal(GO_NORTH);
-   CHECK(uut.my_special_testpoint_executed);
+//TEST_CASE( "Dispatch to subclass", "[fhsm]" ) {
+//   StatefulControllerPlus uut;
+//   uut.Signal(GO_NORTH);
+//   CHECK(uut.my_special_testpoint_executed);
+//}
+
+SCENARIO("Derived state machine class", "[fhsm]") {
+   GIVEN("A state machine derived from another"){
+      StatefulControllerPlus uut;
+      WHEN("A signal is sent to cause a state transition") {
+         uut.Signal(GO_NORTH);
+         THEN("The derived class's methods are called") {
+            CHECK(uut.my_special_testpoint_executed);
+         }
+      }
+   }
 }
 
+SCENARIO("A normal state machine", "[fhsm]") {
+   StatefulController uut;
+   GIVEN("We are in an action-processing state") {
+      uut.Signal(GO_NORTH);
+      REQUIRE(NORTH == uut.CurrentState());
+      REQUIRE(0 == uut.action_count);
+      WHEN("A signal is sent to cause an action") {
+         uut.Signal(DO_ACTION);
+         THEN("The acion method was called") {
+            CHECK(1 == uut.action_count);
+         }
+      }
+   }
 
+   GIVEN("We are in a sub-state that handles nothing locally") {
+      uut.Signal(GO_NORTH);
+      uut.Signal(GO_WEST);
+      uut.Signal(GO_NORTH); // Now in NNW which has no tick, no action, and only one transition (south)
+      REQUIRE(NNW == uut.CurrentState());
+      WHEN("A signal is sent to cause a transition") {
+         uut.Signal(GO_WEST); // transition defined on NORTH
+         THEN("The signal is handled by a higher state") {
+            CHECK(NORTH_WEST == uut.CurrentState());
+         }
+      }
+      WHEN("A signal is sent to cause an action") {
+         uut.Signal(DO_ACTION);
+         THEN("The action is handled by a higher state") {
+            CHECK(1 == uut.action_count);
+         }
+      }
+      WHEN("A tick is sent") {
+         uut.Tick();
+         THEN("The tick is handled by a higher state") {
+            CHECK(1 == uut.testpoint_tick[NORTH_WEST]);
+         }
+      }
+   }
+
+   GIVEN("A signal causes both an action and a transition") {
+      REQUIRE(0 == uut.action_count);
+      REQUIRE(SOUTH == uut.CurrentState());
+      WHEN("The signal is given") {
+         uut.Signal(GO_EAST);
+         THEN("Both the action and the transition are executed") {
+            CHECK(1 == uut.action_count);
+            CHECK(EAST == uut.CurrentState());
+         }
+      }
+      WHEN("The transition is blocked and the signal is given") {
+         uut.BlockEast();
+         uut.Signal(GO_EAST);
+         THEN("Only the action is executed") {
+            CHECK(1 == uut.action_count);
+            CHECK(SOUTH == uut.CurrentState());
+         }
+      }
+   }
+}
+
+enum class ForestStates  { BIRCH_TRUNK, BIRCH_LEFT, BIRCH_RIGHT, PINE_TRUNK, PINE_LEFT, PINE_RIGHT };
+enum class ForestSignals { GO_UP, GO_DOWN_LEFT, GO_DOWN_RIGHT, GO_JUMP, DO_SING };
+class ForestTest {
+   ForestStates m_state = ForestStates::BIRCH_TRUNK;
+   StateMachine<ForestTest, ForestStates, ForestStates::BIRCH_TRUNK, ForestStates::PINE_RIGHT, ForestSignals> m_hsm;
+public:
+   ForestTest() : m_hsm(*this) {
+      m_hsm.DefineState(ForestStates::BIRCH_TRUNK)
+         .SetNoParent()
+         .ForSignal(ForestSignals::GO_DOWN_LEFT).GoTo(ForestStates::BIRCH_LEFT)
+         .ForSignal(ForestSignals::GO_DOWN_RIGHT).GoTo(ForestStates::BIRCH_RIGHT);
+
+      m_hsm.DefineState(ForestStates::PINE_TRUNK)
+         .SetNoParent()
+         .SetOnTick(&ForestTest::DoIt)
+         .ForSignal(ForestSignals::GO_DOWN_LEFT).GoTo(ForestStates::PINE_LEFT)
+         .ForSignal(ForestSignals::GO_DOWN_RIGHT).GoTo(ForestStates::PINE_RIGHT);
+
+      m_hsm.DefineState(ForestStates::PINE_LEFT)
+         .SetParent(ForestStates::PINE_TRUNK)
+         .ForSignal(ForestSignals::GO_UP).GoTo(ForestStates::PINE_TRUNK)
+         .ForSignal(ForestSignals::GO_JUMP).GoTo(ForestStates::BIRCH_LEFT);
+
+      m_hsm.DefineState(ForestStates::PINE_RIGHT)
+         .SetParent(ForestStates::PINE_TRUNK)
+         .ForSignal(ForestSignals::GO_UP).GoTo(ForestStates::PINE_TRUNK)
+         .ForSignal(ForestSignals::GO_JUMP).GoTo(ForestStates::BIRCH_RIGHT);
+
+      m_hsm.DefineState(ForestStates::BIRCH_LEFT)
+         .SetParent(ForestStates::BIRCH_TRUNK)
+         .ForSignal(ForestSignals::GO_UP).GoTo(ForestStates::BIRCH_TRUNK)
+         .ForSignal(ForestSignals::GO_JUMP).GoTo(ForestStates::PINE_RIGHT)
+         .ForSignal(ForestSignals::DO_SING).Do(&ForestTest::Sing);
+
+      m_hsm.DefineState(ForestStates::BIRCH_RIGHT)
+         .SetParent(ForestStates::BIRCH_TRUNK)
+         .ForSignal(ForestSignals::GO_UP).GoTo(ForestStates::BIRCH_TRUNK)
+         .ForSignal(ForestSignals::GO_JUMP).GoTo(ForestStates::PINE_LEFT);
+
+      m_hsm.ConcludeSetupAndSetInitialState(ForestStates::PINE_TRUNK, &ForestTest::NewState);
+   }
+
+   void SetState(const int s) { m_state = static_cast<ForestStates>(s); }
+   void NewState(const ForestStates s) { m_state = s; }
+   int CurrentState() const { return static_cast<int>(m_state); }
+   void Signal(const ForestSignals s) { m_hsm.Signal(s); }
+   void Tick() { m_hsm.Tick(); }
+   bool sung{false};
+   void Sing() {
+      sung = true;
+      //std::cout << "Laaaaaaaa aaaaaa!" << std::endl;
+   }
+   int tickCount{0};
+   void DoIt() { ++tickCount; }
+};
+
+SCENARIO("Disconnected states", "[fhsm]") {
+   ForestTest uut;
+   GIVEN("A forest state hierarchy") {
+      REQUIRE(int(ForestStates::PINE_TRUNK) == uut.CurrentState());
+      REQUIRE_FALSE(uut.sung);
+      REQUIRE(0 == uut.tickCount);
+      WHEN("Move deeper in one tree") {
+         uut.Signal(ForestSignals::GO_DOWN_LEFT);
+         THEN("Transition down to second level within branch") {
+            CHECK(int(ForestStates::PINE_LEFT) == uut.CurrentState());
+         }
+         AND_WHEN("Jump to other trunk") {
+            uut.Signal(ForestSignals::GO_JUMP);
+            THEN("Transition down to third level") {
+               CHECK(int(ForestStates::BIRCH_LEFT) == uut.CurrentState());
+            }
+            AND_WHEN("Signal action") {
+               uut.Signal(ForestSignals::DO_SING);
+               THEN("The action executed") {
+                  CHECK(uut.sung);
+               }
+            }
+         }
+      }
+
+      WHEN("A tick is signaled") {
+         uut.Tick();
+         THEN("The tick is executed") {
+            CHECK(1 == uut.tickCount);
+         }
+      }
+   }
+}
+
+enum class CircularStates  { CHICKEN, EGG };
+enum class CircularSignals { MOVE };
+class CircularTest {
+   CircularStates m_state = CircularStates::CHICKEN;
+   StateMachine<CircularTest, CircularStates, CircularStates::CHICKEN, CircularStates::EGG, CircularSignals> m_hsm;
+public:
+   CircularTest() : m_hsm(*this) {
+      m_hsm.DefineState(CircularStates::CHICKEN)
+         .SetParent(CircularStates::EGG)
+         .ForSignal(CircularSignals::MOVE).GoTo(CircularStates::EGG);
+
+      m_hsm.DefineState(CircularStates::EGG)
+         .SetParent(CircularStates::CHICKEN)
+         .ForSignal(CircularSignals::MOVE).GoTo(CircularStates::CHICKEN);
+
+      m_hsm.ConcludeSetupAndSetInitialState(CircularStates::EGG, &CircularTest::NewState);
+   }
+   void NewState(const CircularStates s) { m_state = s; }
+   void Signal(const CircularSignals s) { m_hsm.Signal(s); }
+   void Tick() { m_hsm.Tick(); }
+};
+
+SCENARIO("Usage errors", "[fhsm]") {
+   GIVEN("An ill-formed state hierarchy"){
+      WHEN("You try to create an object") {
+         THEN("It blows up") {
+            REQUIRE_THROWS( new CircularTest() );
+         }
+      }
+   }
+}
