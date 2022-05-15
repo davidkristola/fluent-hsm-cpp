@@ -138,7 +138,7 @@ public:
    void NNWOnExit() {
       testpoint_exit[NNW] += 1;
    }
-    
+
    void DoAction() {
       ++action_count;
       //std::cout << "DoAction()" << std::endl;
@@ -278,7 +278,7 @@ void test_13_signal_guard_prevents_transition() {
 }
 
 enum class ForestStates  { BIRCH_TRUNK, BIRCH_LEFT, BIRCH_RIGHT, PINE_TRUNK, PINE_LEFT, PINE_RIGHT };
-enum class ForestSignals { GO_UP, GO_DOWN_LEFT, GO_DOWN_RIGHT, JUMP, SING };
+enum class ForestSignals { GO_UP, GO_DOWN_LEFT, GO_DOWN_RIGHT, JUMP, SING_LOUD }; // SING is a Clang macro
 class ForestTest {
    ForestStates m_state = ForestStates::BIRCH_TRUNK;
    StateMachine<ForestTest, ForestStates, ForestStates::BIRCH_TRUNK, ForestStates::PINE_RIGHT, ForestSignals> m_hsm;
@@ -309,7 +309,7 @@ public:
          .SetParent(ForestStates::BIRCH_TRUNK)
          .ForSignal(ForestSignals::GO_UP).GoTo(ForestStates::BIRCH_TRUNK)
          .ForSignal(ForestSignals::JUMP).GoTo(ForestStates::PINE_RIGHT)
-         .ForSignal(ForestSignals::SING).Do(&ForestTest::Sing);
+         .ForSignal(ForestSignals::SING_LOUD).Do(&ForestTest::Sing);
 
       m_hsm.DefineState(ForestStates::BIRCH_RIGHT)
          .SetParent(ForestStates::BIRCH_TRUNK)
@@ -341,7 +341,7 @@ void test_14_forest_transition() {
    TEST_EQ(int(ForestStates::PINE_LEFT), uut.CurrentState());
    uut.Signal(ForestSignals::JUMP);
    TEST_EQ(int(ForestStates::BIRCH_LEFT), uut.CurrentState());
-   uut.Signal(ForestSignals::SING);
+   uut.Signal(ForestSignals::SING_LOUD);
    TEST_EQ(uut.sung, true);
 }
 

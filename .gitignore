@@ -6,3 +6,7 @@ main
 catch.hpp
 
 ut
+
+*.gch
+
+status_ut
