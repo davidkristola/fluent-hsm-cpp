@@ -1,3 +1,9 @@
+// I, the creator and copyright holder of this source code, release this work
+// into the public domain. This applies worldwide.
+// In some jurisdictions this not may be legally possible. In such case I grant
+// anyone the right to use this work for any purpose, without any conditions,
+// unless such conditions are required by law.
+//
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "kv/status/status.hpp"
@@ -49,11 +55,11 @@ TEST_CASE( "Mutable variables", "[status]" ) {
    status = kv::status::Error;
    CHECK(kv::status::Error == status);
 }
-TEST_CASE( "isA identity", "[status]" ) {
+TEST_CASE( "is_a identity", "[status]" ) {
    auto status = kv::status::Success;
-   CHECK(status.isA(kv::status::Success));
+   CHECK(status.is_a(kv::status::Success));
 }
-TEST_CASE( "isA subclass", "[status]" ) {
+TEST_CASE( "is_a subclass", "[status]" ) {
    auto status = kv::status::Already;
-   CHECK(status.isA(kv::status::Success));
+   CHECK(status.is_a(kv::status::Success));
 }
