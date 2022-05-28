@@ -16,7 +16,7 @@ namespace kv::status
     //TODO(djk): see if there is a way to make this a "not nullptr" type
     const BaseStatus* status;
   public:
-    constexpr Status(const BaseStatus* p) noexcept : status(p) {}
+    constexpr explicit Status(const BaseStatus* p) noexcept : status(p) {}
     constexpr operator bool() const noexcept { return status && status->success; }
     constexpr bool is_a(const Status& rhs) const noexcept { return status && rhs.status && status->is_a(*rhs.status); }
     constexpr const char * c_str() const noexcept { return status ? status->image : ""; }
