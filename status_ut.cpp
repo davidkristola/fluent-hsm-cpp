@@ -94,3 +94,17 @@ TEST_CASE( "MyError", "[status]" ) {
 
 // This won't compile:
 //DEFINE_STATUS(AnotherError, IS_A_CHILD_OF_STATUS(Error));
+
+TEST_CASE( "Don't crash if someone forces a bad Status", "[status]" ) {
+  kv::status::Status intentionally_bad{nullptr};
+  CHECK( ! intentionally_bad );
+  CHECK( intentionally_bad != kv::status::Success );
+  CHECK( ! intentionally_bad.is_a(kv::status::Success) );
+  CHECK( ! intentionally_bad.is_a(kv::status::NonSuccess) );
+  CHECK( ! intentionally_bad.is_a(kv::status::Uninitialized) );
+  CHECK( std::string("") == std::string(intentionally_bad.c_str()) );
+}
+TEST_CASE( "Size of a pointer", "[status]" ) {
+  int * ptr = nullptr;
+  CHECK(sizeof(kv::status::Success) == sizeof(ptr) );
+}

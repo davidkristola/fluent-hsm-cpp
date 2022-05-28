@@ -28,16 +28,6 @@ namespace kv::status
     }
   };
 
-  class Status {
-    const BaseStatus* status;
-  public:
-    constexpr Status(const BaseStatus* p) noexcept : status(p) {}
-    constexpr operator bool() const noexcept { return status->success; }
-    constexpr bool is_equal(const Status& rhs) const noexcept { return rhs.status && status->is_equal(*rhs.status); }
-    constexpr bool is_a(const Status& rhs) const noexcept { return rhs.status && status->is_a(*rhs.status); }
-    constexpr const char * c_str() const noexcept { return status->image; }
-  };
-
   // Yes, this creates a singleton, but it is immutable and trivially destructable
 
   #define INTERNAL_USE_ONLY_DEF_L0(name, parent, s) \

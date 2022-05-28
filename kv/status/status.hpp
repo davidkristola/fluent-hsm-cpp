@@ -11,6 +11,17 @@
 namespace kv::status
 {
 
+  // This is a "pass by value" type.
+  class Status {
+    //TODO(djk): see if there is a way to make this a "not nullptr" type
+    const BaseStatus* status;
+  public:
+    constexpr Status(const BaseStatus* p) noexcept : status(p) {}
+    constexpr operator bool() const noexcept { return status && status->success; }
+    constexpr bool is_a(const Status& rhs) const noexcept { return status && rhs.status && status->is_a(*rhs.status); }
+    constexpr const char * c_str() const noexcept { return status ? status->image : ""; }
+  };
+
   DEFINE_PARENT_LEVEL_GOOD_STATUS(Success);
   DEFINE_PARENT_LEVEL_BAD_STATUS(Uninitialized);
   DEFINE_PARENT_LEVEL_BAD_STATUS(NonSuccess);
