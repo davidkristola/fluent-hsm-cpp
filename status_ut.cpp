@@ -59,7 +59,9 @@ TEST_CASE( "is_a identity", "[status]" ) {
    auto status = kv::status::Success;
    CHECK(status.is_a(kv::status::Success));
 }
-TEST_CASE( "is_a subclass", "[status]" ) {
-   auto status = kv::status::Already;
-   CHECK(status.is_a(kv::status::Success));
+TEST_CASE( "Impl is_a identity", "[status]" ) {
+   CHECK(kv::status::Success.is_a(kv::status::Success));
+}
+TEST_CASE( "Impl is_a subclass", "[status]" ) {
+   CHECK(kv::status::Already.is_a(kv::status::Success));
 }
