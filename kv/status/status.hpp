@@ -26,6 +26,12 @@ namespace kv::status
     }
     return hash;
   }
+  // https://stackoverflow.com/questions/2111667/compile-time-string-hashing
+  //unsigned constexpr const_hash(char const *input) {
+  //  return *input ?
+  //      static_cast<unsigned int>(*input) + 33 * const_hash(input + 1) :
+  //      5381;
+  //}
 
   class BaseStatus
   {
@@ -75,17 +81,19 @@ namespace kv::status
     INTERNAL_USE_ONLY_DEF_L0(name, nullptr, false)
 
   #define DEFINE_STATUS(name, parent) \
-    INTERNAL_USE_ONLY_DEF_L0(name, parent##Singleton::get(), bool(*parent##Singleton::get()))
+    INTERNAL_USE_ONLY_DEF_L0(name, parent, bool(*parent))
 
+  #define IS_A_CHILD_OF_STATUS(parent) \
+     parent##Singleton::get()
 
   DEFINE_PARENT_LEVEL_GOOD_STATUS(Success);
   DEFINE_PARENT_LEVEL_BAD_STATUS(Uninitialized);
   DEFINE_PARENT_LEVEL_BAD_STATUS(NonSuccess);
 
-  DEFINE_STATUS(Already, Success);
+  DEFINE_STATUS(Already, IS_A_CHILD_OF_STATUS(Success));
 
-  DEFINE_STATUS(Rejected, NonSuccess);
-  DEFINE_STATUS(Error, NonSuccess);
-  DEFINE_STATUS(Failure, NonSuccess);
+  DEFINE_STATUS(Rejected, IS_A_CHILD_OF_STATUS(NonSuccess));
+  DEFINE_STATUS(Error, IS_A_CHILD_OF_STATUS(NonSuccess));
+  DEFINE_STATUS(Failure, IS_A_CHILD_OF_STATUS(NonSuccess));
 
 } // namespace kv::status

@@ -76,10 +76,21 @@ TEST_CASE( "trivially destructable", "[status]" ) {
 }
 
 namespace kv::status {
-DEFINE_STATUS(MyError, Error);
+DEFINE_STATUS(MyError, IS_A_CHILD_OF_STATUS(Error));
 } // namespace kv::status
+
 TEST_CASE( "MyError", "[status]" ) {
   CHECK( ! kv::status::MyError );
   CHECK( kv::status::MyError.is_a(kv::status::Error) );
+  CHECK( kv::status::MyError.is_a(kv::status::NonSuccess) );
+  CHECK( ! kv::status::MyError.is_a(kv::status::Success) );
   CHECK( std::string("MyError") == std::string(kv::status::MyError.c_str()) );
 }
+
+// This won't compile:
+//namespace kv::status {
+//DEFINE_STATUS(MyError, IS_A_CHILD_OF_STATUS(Error));
+//} // namespace kv::status
+
+// This won't compile:
+//DEFINE_STATUS(AnotherError, IS_A_CHILD_OF_STATUS(Error));
