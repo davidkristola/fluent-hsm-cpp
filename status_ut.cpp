@@ -7,8 +7,8 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "kv/status/status.hpp"
-
-//using namespace kv::status;
+#include <string>
+#include <type_traits>
 
 enum class TestControl {SUCCESS, ALREADY, UNINITIALIZED, REJECTED, ERROR, FAILURE};
 
@@ -59,9 +59,27 @@ TEST_CASE( "is_a identity", "[status]" ) {
    auto status = kv::status::Success;
    CHECK(status.is_a(kv::status::Success));
 }
-TEST_CASE( "Impl is_a identity", "[status]" ) {
-   CHECK(kv::status::Success.is_a(kv::status::Success));
-}
-TEST_CASE( "Impl is_a subclass", "[status]" ) {
+TEST_CASE( "is_a subclass", "[status]" ) {
    CHECK(kv::status::Already.is_a(kv::status::Success));
+}
+TEST_CASE( "is_a not a subclass", "[status]" ) {
+   CHECK( ! kv::status::Already.is_a(kv::status::Error));
+}
+TEST_CASE( "name check", "[status]" ) {
+   CHECK( std::string("Already") == std::string(kv::status::Already.c_str()) );
+   CHECK( std::string("Success") == std::string(kv::status::Success.c_str()) );
+   CHECK( std::string("Error") == std::string(kv::status::Error.c_str()) );
+}
+TEST_CASE( "trivially destructable", "[status]" ) {
+  CHECK( std::is_trivially_destructible<decltype(kv::status::Already)>::value );
+  CHECK( std::is_trivially_destructible<kv::status::hidden_details_look_away::AlreadySingleton>::value );
+}
+
+namespace kv::status {
+DEFINE_STATUS(MyError, Error);
+} // namespace kv::status
+TEST_CASE( "MyError", "[status]" ) {
+  CHECK( ! kv::status::MyError );
+  CHECK( kv::status::MyError.is_a(kv::status::Error) );
+  CHECK( std::string("MyError") == std::string(kv::status::MyError.c_str()) );
 }
