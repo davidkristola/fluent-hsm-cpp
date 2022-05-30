@@ -18,7 +18,7 @@ kv::status::Status TestFunction(const TestControl control)
   {
     case TestControl::SUCCESS: return kv::status::Success; break;
     case TestControl::ALREADY: return kv::status::Already; break;
-    case TestControl::UNINITIALIZED: return kv::status::Uninitialized; break;
+    case TestControl::UNINITIALIZED: return kv::status::Status(); break;
     case TestControl::REJECTED: return kv::status::Rejected; break;
     case TestControl::ERROR: return kv::status::Error; break;
     case TestControl::FAILURE: return kv::status::Failure; break;
@@ -44,13 +44,13 @@ TEST_CASE( "Return values as bool", "[status]" ) {
 TEST_CASE( "Return values as Status", "[status]" ) {
    CHECK(kv::status::Success == TestFunction(TestControl::SUCCESS));
    CHECK(kv::status::Already == TestFunction(TestControl::ALREADY));
-   CHECK(kv::status::Uninitialized == TestFunction(TestControl::UNINITIALIZED));
    CHECK(kv::status::Rejected == TestFunction(TestControl::REJECTED));
    CHECK(kv::status::Error == TestFunction(TestControl::ERROR));
    CHECK(kv::status::Failure == TestFunction(TestControl::FAILURE));
 }
 TEST_CASE( "Mutable variables", "[status]" ) {
-   auto status = kv::status::Success;
+   kv::status::Status status; //TODO(djk): should there be a default constructor?
+   status = kv::status::Success;
    CHECK(kv::status::Success == status);
    status = kv::status::Error;
    CHECK(kv::status::Error == status);
@@ -101,8 +101,7 @@ TEST_CASE( "Don't crash if someone forces a bad Status", "[status]" ) {
   CHECK( intentionally_bad != kv::status::Success );
   CHECK( ! intentionally_bad.is_a(kv::status::Success) );
   CHECK( ! intentionally_bad.is_a(kv::status::NonSuccess) );
-  CHECK( ! intentionally_bad.is_a(kv::status::Uninitialized) );
-  CHECK( std::string("") == std::string(intentionally_bad.c_str()) );
+  CHECK( std::string("Uninitialized") == std::string(intentionally_bad.c_str()) );
 }
 TEST_CASE( "Size of a pointer", "[status]" ) {
   int * ptr = nullptr;

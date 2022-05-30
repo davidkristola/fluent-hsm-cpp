@@ -30,7 +30,7 @@ namespace kv::status
 
   // Yes, this creates a singleton, but it is immutable and trivially destructable
 
-  #define INTERNAL_USE_ONLY_DEF_L0(name, parent, s) \
+  #define INTERNAL_USE_ONLY_DEF_UNIQUE_SINGLETON(name, parent, s) \
   namespace hidden_details_look_away { \
   class name##Singleton : public BaseStatus { \
     explicit name##Singleton(const char * i) : BaseStatus(parent, fvn_hash(#name), s, i) {} \
@@ -39,7 +39,13 @@ namespace kv::status
       constexpr const char * img = #name; \
       static const name##Singleton me{img}; \
       return &me; } \
-  }; } \
+  }; }
+
+  // This is a default singleton used when Status is given a nullptr.
+  INTERNAL_USE_ONLY_DEF_UNIQUE_SINGLETON(Uninitialized, nullptr, false) // no semicolon
+
+  #define INTERNAL_USE_ONLY_DEF_L0(name, parent, s) \
+  INTERNAL_USE_ONLY_DEF_UNIQUE_SINGLETON(name, parent, s) \
   const Status name{hidden_details_look_away::name##Singleton::get()}
 
   #define DEFINE_PARENT_LEVEL_GOOD_STATUS(name) \

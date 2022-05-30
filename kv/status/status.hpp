@@ -16,14 +16,14 @@ namespace kv::status
     //TODO(djk): see if there is a way to make this a "not nullptr" type
     const BaseStatus* status;
   public:
-    constexpr explicit Status(const BaseStatus* p) noexcept : status(p) {}
+    Status() noexcept : status(hidden_details_look_away::UninitializedSingleton::get()) {}
+    constexpr explicit Status(const BaseStatus* p) noexcept : status(p?p:hidden_details_look_away::UninitializedSingleton::get()) {}
     constexpr operator bool() const noexcept { return status && status->success; }
     constexpr bool is_a(const Status& rhs) const noexcept { return status && rhs.status && status->is_a(*rhs.status); }
     constexpr const char * c_str() const noexcept { return status ? status->image : ""; }
   };
 
   DEFINE_PARENT_LEVEL_GOOD_STATUS(Success);
-  DEFINE_PARENT_LEVEL_BAD_STATUS(Uninitialized);
   DEFINE_PARENT_LEVEL_BAD_STATUS(NonSuccess);
 
   DEFINE_STATUS(Already, IS_A_CHILD_OF_STATUS(Success));
