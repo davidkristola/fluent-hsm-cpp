@@ -6,7 +6,7 @@
 //
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include "kv/status/optional.hpp"
+#include "kv/embedded/optional.hpp"
 #include <string>
 #include <type_traits>
 
