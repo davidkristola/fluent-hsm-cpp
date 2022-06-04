@@ -8,7 +8,7 @@
 
 #include "status.hpp"
 
-namespace kv::status {
+namespace kv::embedded {
 
     template<typename T>
     struct optional {
@@ -19,4 +19,4 @@ namespace kv::status {
         constexpr operator bool() const { return bool(status); }
     };
 
-} // namespace kv::status
+} // namespace kv::embedded

@@ -8,7 +8,7 @@
 
 #include "status_implementation_details.hpp"
 
-namespace kv::status
+namespace kv::embedded
 {
 
   // This is a "pass by value" type.
@@ -32,4 +32,4 @@ namespace kv::status
   DEFINE_STATUS(Error, IS_A_CHILD_OF_STATUS(NonSuccess));
   DEFINE_STATUS(Failure, IS_A_CHILD_OF_STATUS(NonSuccess));
 
-} // namespace kv::status
+} // namespace kv::embedded

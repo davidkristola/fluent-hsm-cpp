@@ -9,7 +9,7 @@
 #include "fvn_hash.hpp"
 #include <cstdint>
 
-namespace kv::status
+namespace kv::embedded
 {
   class BaseStatus
   {
@@ -59,6 +59,6 @@ namespace kv::status
 
   #define IS_A_CHILD_OF_STATUS(parent) \
      parent##Singleton::get()
-} // namespace kv::status
+} // namespace kv::embedded
 
 // https://www.fluentcpp.com/2020/06/26/implementing-a-universal-reference-wrapper/

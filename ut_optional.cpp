@@ -11,10 +11,10 @@
 #include <type_traits>
 
 TEST_CASE( "Simple Failure", "[optional]" ) {
-    kv::status::optional<int> uninitialized;
+    kv::embedded::optional<int> uninitialized;
     CHECK( ! uninitialized );
 }
 TEST_CASE( "Simple Success", "[optional]" ) {
-    kv::status::optional<int> initialized{0};
+    kv::embedded::optional<int> initialized{0};
     CHECK( initialized );
 }

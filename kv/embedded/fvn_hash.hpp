@@ -6,7 +6,7 @@
 //
 #pragma once
 
-namespace kv::status
+namespace kv::embedded
 {
   // http://isthe.com/chongo/tech/comp/fnv
   static constexpr uint64_t fvn_prime = 1099511628211ULL;
@@ -27,5 +27,5 @@ namespace kv::status
   //  return *input ?
   //      static_cast<unsigned int>(*input) + 33 * const_hash(input + 1) :
   //      5381;
-  //}  
-} // namespace kv::status
+  //}
+} // namespace kv::embedded
