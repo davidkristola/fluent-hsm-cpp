@@ -7,7 +7,20 @@
 #pragma once
 
 #include "status.hpp"
+#include <cstdint>
 
 namespace kv::embedded {
+
+template<size_t storage_units>
+class string
+{
+    uint64_t m_storage[storage_units];
+public:
+    string(const char* s) noexcept
+    {
+        for (auto i=0; i<storage_units; i++) m_storage[i] = 0;
+    }
+    const char* c_str() const noexcept { return "Hello"; }
+};
 
 } // namespace kv::embedded

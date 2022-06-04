@@ -11,5 +11,6 @@
 #include <type_traits>
 
 TEST_CASE( "Simple Success", "[string]" ) {
-    CHECK( true );
+    kv::embedded::string<1> hello{"Hello"};
+    CHECK( std::string("Hello") == std::string(hello.c_str()) );
 }
