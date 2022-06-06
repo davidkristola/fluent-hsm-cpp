@@ -32,6 +32,21 @@ public:
         }
     }
     const char* c_str() const noexcept { return &m_string[1]; }
+    string<storage_units>& append(const char *s) noexcept
+    {
+        for (auto i=0; (s[i] != 0) && (m_string[0] < ((storage_units*8)-2)); i++)
+        {
+            m_string[1 + m_string[0]] = s[i];
+            m_string[0]++;
+        }
+        return *this;
+    }
+    template<size_t other_storage>
+    string<storage_units>& append(const string<other_storage>& other)
+    {
+        append(other.c_str());
+        return *this;
+    }
 };
 
 } // namespace kv::embedded
