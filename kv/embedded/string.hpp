@@ -18,31 +18,48 @@ class string
         uint64_t m_storage[storage_units];
         char m_string[storage_units * 8];
     };
+
+    constexpr void inc() noexcept { m_string[0]++; }
 public:
-    string(const char* s) noexcept
+    constexpr size_t storage() const noexcept { return (storage_units * 8) - 2; }
+    constexpr uint8_t length() const noexcept { return static_cast<uint8_t>(m_string[0]); }
+    constexpr void clear() noexcept
     {
         for (auto i=0; i<storage_units; i++)
         {
             m_storage[i] = 0;
         }
-        for (auto i=0; (s[i] != 0) && (i < ((storage_units*8)-2)); i++)
+    }
+
+    constexpr string() noexcept
+    {
+        clear();
+    }
+
+    constexpr string(const char* s) noexcept
+    {
+        clear();
+        for (auto i=0; (s[i] != 0) && (length() < storage()); i++)
         {
-            m_string[i+1] = s[i];
-            m_string[0]++;
+            m_string[1 + length()] = s[i];
+            inc();
         }
     }
-    const char* c_str() const noexcept { return &m_string[1]; }
-    string<storage_units>& append(const char *s) noexcept
+
+    constexpr const char* c_str() const noexcept { return &m_string[1]; }
+
+    constexpr string<storage_units>& append(const char *s) noexcept
     {
-        for (auto i=0; (s[i] != 0) && (m_string[0] < ((storage_units*8)-2)); i++)
+        for (auto i=0; (s[i] != 0) && (length() < storage()); i++)
         {
-            m_string[1 + m_string[0]] = s[i];
-            m_string[0]++;
+            m_string[1 + length()] = s[i];
+            inc();
         }
         return *this;
     }
+
     template<size_t other_storage>
-    string<storage_units>& append(const string<other_storage>& other)
+    constexpr string<storage_units>& append(const string<other_storage>& other)
     {
         append(other.c_str());
         return *this;

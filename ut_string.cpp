@@ -29,3 +29,25 @@ TEST_CASE( "Simple Success 2", "[string]" ) {
     good_by.append(" and thanks").append(" for all the").append(" fish!");
     CHECK( std::string("Good By! and thanks for all the fish!") == std::string(good_by.c_str()) );
 }
+
+TEST_CASE( "Storage", "[string]" ) {
+    kv::embedded::string<1> hello;
+    CHECK( (8*1)-2 == hello.storage() );
+    kv::embedded::string<2> two;
+    CHECK( (8*2)-2 == two.storage() );
+    kv::embedded::string<3> three;
+    CHECK( (8*3)-2 == three.storage() );
+    kv::embedded::string<4> four;
+    CHECK( (8*4)-2 == four.storage() );
+}
+
+TEST_CASE( "Length", "[string]" ) {
+    kv::embedded::string<1> one{"12345"};
+    CHECK( 5 == one.length() );
+    kv::embedded::string<2> two{"123456789"};
+    CHECK( 9 == two.length() );
+}
+
+TEST_CASE( "Should not compile", "[string]" ) {
+    kv::embedded::string<33> too_big{"12345"};
+}
