@@ -6,7 +6,7 @@ main
 catch.hpp
 *.gch
 
-ut_fhsm
-ut_status
-ut_optional
-ut_string
+./ut_fhsm
+./ut_status
+./ut_optional
+./ut_string

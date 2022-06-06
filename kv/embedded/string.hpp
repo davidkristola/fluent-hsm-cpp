@@ -14,7 +14,10 @@ namespace kv::embedded {
 template<size_t storage_units>
 class string
 {
-    uint64_t m_storage[storage_units];
+    union {
+        uint64_t m_storage[storage_units];
+        char m_string[storage_units * 8];
+    };
 public:
     string(const char* s) noexcept
     {
