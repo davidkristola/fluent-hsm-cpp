@@ -1,11 +1,20 @@
+# Ignore all
+*
+
+# Unignore all with extensions
+!*.*
+
+# Unignore all dirs
+!*/
 
 notes.txt
-
-main
-
 catch.hpp
+
+.DS_Store
+
 *.gch
 
+main
 ./ut_fhsm
 ./ut_status
 ./ut_optional
