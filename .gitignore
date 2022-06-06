@@ -4,16 +4,9 @@ notes.txt
 main
 
 catch.hpp
-
-ut
-
 *.gch
-
-status_ut
 
 ut_fhsm
 ut_status
 ut_optional
 ut_string
-
-ut_optional

@@ -13,4 +13,6 @@
 TEST_CASE( "Simple Success", "[string]" ) {
     kv::embedded::string<1> hello{"Hello"};
     CHECK( std::string("Hello") == std::string(hello.c_str()) );
+    kv::embedded::string<1> good_by{"Good by!"};
+    CHECK( std::string("Good b") == std::string(good_by.c_str()) );
 }
