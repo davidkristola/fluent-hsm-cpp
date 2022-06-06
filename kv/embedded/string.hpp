@@ -21,9 +21,17 @@ class string
 public:
     string(const char* s) noexcept
     {
-        for (auto i=0; i<storage_units; i++) m_storage[i] = 0;
+        for (auto i=0; i<storage_units; i++)
+        {
+            m_storage[i] = 0;
+        }
+        for (auto i=0; (s[i] != 0) && (i < ((storage_units*8)-2)); i++)
+        {
+            m_string[i+1] = s[i];
+            m_string[0]++;
+        }
     }
-    const char* c_str() const noexcept { return "Hello"; }
+    const char* c_str() const noexcept { return &m_string[1]; }
 };
 
 } // namespace kv::embedded
