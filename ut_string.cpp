@@ -48,6 +48,6 @@ TEST_CASE( "Length", "[string]" ) {
     CHECK( 9 == two.length() );
 }
 
-TEST_CASE( "Should not compile", "[string]" ) {
-    kv::embedded::string<33> too_big{"12345"};
-}
+//TEST_CASE( "Should not compile", "[string]" ) {
+//    kv::embedded::string<33> too_big{"12345"};
+//}

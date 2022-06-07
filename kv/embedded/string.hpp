@@ -11,8 +11,11 @@
 
 namespace kv::embedded {
 
+struct unused_base_class{};
+constexpr bool small_enough(size_t size) { return size < 33; }
+
 template<size_t storage_units>
-class string
+class string : private std::enable_if<small_enough(storage_units),unused_base_class>::type
 {
     union {
         uint64_t m_storage[storage_units];
