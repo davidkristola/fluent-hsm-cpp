@@ -10,13 +10,17 @@
 
 namespace kv::embedded {
 
-    template<typename T>
-    struct optional {
-        Status status;
-        T value;
-        optional() : status(), value() {}
-        /* implicit */ optional(const T& v) : status(Success), value(v) {}
-        constexpr operator bool() const { return bool(status); }
-    };
+// http://www.club.cc.cmu.edu/~ajo/disseminate/2017-02-15-Optional-From-Scratch.pdf
+
+template<typename T>
+struct optional {
+    Status m_status;
+    T m_value;
+    optional() : m_status(), m_value() {}
+    /* implicit */ optional(const T& v) : m_status(Success), m_value(v) {}
+    /* implicit */ optional(Status s) : m_status(s), m_value() {}
+    constexpr operator bool() const { return bool(m_status); }
+    constexpr T value() const { return m_value; }
+};
 
 } // namespace kv::embedded

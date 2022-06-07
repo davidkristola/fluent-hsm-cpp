@@ -18,3 +18,15 @@ TEST_CASE( "Simple Success", "[optional]" ) {
     kv::embedded::optional<int> initialized{0};
     CHECK( initialized );
 }
+
+kv::embedded::optional<int> test_function(bool good)
+{
+    if (good) return 37;
+    return kv::embedded::Error;
+}
+
+TEST_CASE( "Indirect Success", "[optional]" ) {
+    const auto value = test_function(true);
+    CHECK( value );
+    CHECK( value.value() == 37 );
+}
